@@ -1,69 +1,31 @@
 import streamlit as st
 import pandas as pd
 import os
-import re
 from datetime import datetime
 
 # File path
 FILE_PATH = 'Aramark (Vestis) Uniform Spreadsheet.xlsx'
-
-def migrate_old_data(df):
-    """Parses old columns and populates new ones."""
-    # Migrate Pants: Expects format like "34x32 (5)"
-    if "Pants Order(#)" in df.columns:
-        def parse_pants(val):
-            val = str(val)
-            size_match = re.search(r'(\d+x\d+)', val, re.IGNORECASE)
-            num_match = re.search(r'\((\d+)\)', val)
-            size = size_match.group(1) if size_match else ""
-            num = num_match.group(1) if num_match else 1
-            return size, num
-        
-        parsed = df["Pants Order(#)"].apply(lambda x: pd.Series(parse_pants(x)))
-        df['Pants Size'] = parsed[0]
-        df['Number of Pants'] = parsed[1]
-
-    # Migrate Shirts: Expects format like "XL (2)"
-    if "Shirts Order (#)" in df.columns:
-        def parse_shirts(val):
-            val = str(val)
-            size_match = re.search(r'^([A-Za-z0-9]+)', val)
-            num_match = re.search(r'\((\d+)\)', val)
-            size = size_match.group(1) if size_match else ""
-            num = num_match.group(1) if num_match else 1
-            return size, num
-        
-        parsed = df["Shirts Order (#)"].apply(lambda x: pd.Series(parse_shirts(x)))
-        df['Shirt Size'] = parsed[0]
-        df['Number of Shirts'] = parsed[1]
-
-    return df
 
 def load_and_clean_data():
     if not os.path.exists(FILE_PATH):
         st.error(f"File '{FILE_PATH}' not found!")
         return pd.DataFrame()
     
+    # Load data
     df = pd.read_excel(FILE_PATH, sheet_name='Uniform Work Order Tracking')
     
-    # 1. Run migration if old columns exist
-    df = migrate_old_data(df)
-    
-    # 2. Drop the old columns and "Unnamed" columns
-    cols_to_drop = [c for c in df.columns if "Unnamed" in str(c) or "Order(#)" in str(c) or "Order (#)" in str(c)]
+    # Clean up display by dropping unwanted "Unnamed" columns
+    cols_to_drop = [c for c in df.columns if "Unnamed" in str(c)]
     df = df.drop(columns=cols_to_drop, errors='ignore')
     
-    # 3. Ensure necessary columns exist for the form
-    for col in ['Comments', 'Number of Pants', 'Number of Shirts', 'Shirt Size', 'Pants Size']:
-        if col not in df.columns:
-            df[col] = ""
-            
+    # Drop rows that are entirely empty
     df = df.dropna(how='all')
+    
     return df
 
 st.title("Uniform Work Order Tracking")
 
-# Define Options
+# Define Options for new entries
 shirt_sizes = ["XS", "S", "M", "L", "XL", "2XL", "3XL", "4XL", "5XL", "6XL"]
 waists = range(28, 62, 2)
 inseams = range(28, 36, 2)
@@ -80,7 +42,18 @@ with st.form("new_entry_form", clear_on_submit=True):
     new_data = {}
     cols = st.columns(2)
     
-    for i, col in enumerate(df.columns):
+    # Define the fields you want in the new entry form
+    form_fields = [
+        'Date of Order', 'Shirt Size', 'Pants Size', 
+        'Number of Shirts', 'Number of Pants', 'Comments'
+    ]
+    
+    # You can add other standard fields found in your existing sheet here too
+    for col in df.columns:
+        if col not in form_fields:
+            form_fields.append(col)
+
+    for i, col in enumerate(form_fields):
         with cols[i % 2]:
             if col == 'Date of Order':
                 new_data[col] = st.date_input(f"{col}", value=datetime.now())
@@ -101,7 +74,9 @@ with st.form("new_entry_form", clear_on_submit=True):
 
 if submit:
     new_row = pd.DataFrame([new_data])
-    new_row['Date of Order'] = new_row['Date of Order'].astype(str)
+    # Convert date to string for Excel compatibility
+    if 'Date of Order' in new_row.columns:
+        new_row['Date of Order'] = new_row['Date of Order'].astype(str)
     
     updated_df = pd.concat([df, new_row], ignore_index=True)
     
