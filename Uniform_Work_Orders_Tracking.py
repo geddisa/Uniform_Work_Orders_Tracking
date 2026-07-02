@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import os
+from datetime import datetime
 
 # File path
 FILE_PATH = 'Aramark (Vestis) Uniform Spreadsheet.xlsx'
@@ -38,7 +39,11 @@ with st.form("new_entry_form", clear_on_submit=True):
     # Generate inputs based on remaining clean columns
     for i, col in enumerate(df.columns):
         with cols[i % 2]:
-            if col == 'Workorder Number':  # Identifying the column for comments
+            if col == 'Date of Order':
+                # Calendar Dropdown
+                new_data[col] = st.date_input(f"{col}", value=datetime.now())
+            elif col == 'Workorder Number':
+                # Multi-line comment area
                 new_data[col] = st.text_area(f"{col} (Add comments here if needed)")
             else:
                 new_data[col] = st.text_input(f"{col}")
@@ -47,6 +52,9 @@ with st.form("new_entry_form", clear_on_submit=True):
 
 if submit:
     new_row = pd.DataFrame([new_data])
+    # Ensure the date is formatted as a string for Excel if preferred
+    new_row['Date of Order'] = new_row['Date of Order'].astype(str)
+    
     updated_df = pd.concat([df, new_row], ignore_index=True)
     
     # Save back to Excel
