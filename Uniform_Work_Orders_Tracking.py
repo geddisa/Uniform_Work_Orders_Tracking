@@ -38,21 +38,26 @@ st.dataframe(df)
 
 # Automate data entry form
 st.subheader("Add New Work Order")
+
+# List of old columns we want to HIDE from the entry form
+EXCLUDED_FROM_FORM = ['Shirts Order (#)', 'Pants Order(#)']
+
 with st.form("new_entry_form", clear_on_submit=True):
     new_data = {}
     cols = st.columns(2)
     
-    # Define the fields you want in the new entry form
+    # 1. Define the specific fields we WANT to see in the form
     form_fields = [
         'Date of Order', 'Shirt Size', 'Pants Size', 
         'Number of Shirts', 'Number of Pants', 'Comments'
     ]
     
-    # You can add other standard fields found in your existing sheet here too
+    # 2. Add any other existing columns (excluding the old ones we want to hide)
     for col in df.columns:
-        if col not in form_fields:
+        if col not in form_fields and col not in EXCLUDED_FROM_FORM:
             form_fields.append(col)
 
+    # 3. Create the form inputs
     for i, col in enumerate(form_fields):
         with cols[i % 2]:
             if col == 'Date of Order':
@@ -74,7 +79,6 @@ with st.form("new_entry_form", clear_on_submit=True):
 
 if submit:
     new_row = pd.DataFrame([new_data])
-    # Convert date to string for Excel compatibility
     if 'Date of Order' in new_row.columns:
         new_row['Date of Order'] = new_row['Date of Order'].astype(str)
     
