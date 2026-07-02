@@ -1,95 +1,75 @@
 import streamlit as st
-import pandas as pd
-import os
-from datetime import datetime
+import requests
 
-# File path - ensure this file is in the same folder as this script
-FILE_PATH = 'Aramark (Vestis) Uniform Spreadsheet.xlsx'
+# Configuration
+# Note: Since we are using Power Automate, we no longer need the local file path
+WEBHOOK_URL = "https://86c709e36af6e04d916240275e24f8.0b.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/7426183ceca2431d81c6a82e6a11dc85/triggers/manual/paths/invoke?api-version=1"
 
-def load_and_clean_data():
-    if not os.path.exists(FILE_PATH):
-        st.error(f"File '{FILE_PATH}' not found! Please ensure it is in the same directory.")
-        return pd.DataFrame()
-    
-    # Load data
-    df = pd.read_excel(FILE_PATH, sheet_name='Uniform Work Order Tracking')
-    
-    # Map 'Unnamed: 5' to 'Comments' to keep history consistent
-    if 'Unnamed: 5' in df.columns:
-        df = df.rename(columns={'Unnamed: 5': 'Comments'})
-    
-    # Clean up display by dropping unwanted "Unnamed" columns
-    cols_to_drop = [c for c in df.columns if "Unnamed" in str(c) and c != 'Comments']
-    df = df.drop(columns=cols_to_drop, errors='ignore')
-    
-    # Drop rows that are entirely empty
-    df = df.dropna(how='all')
-    
-    return df
+st.set_page_config(page_title="Uniform Work Order Tracking", layout="centered")
 
-st.set_page_config(layout="wide")
+# Add your logo
+# if os.path.exists("CENX_BIG-c7dd3883.png"):
+#     st.logo("CENX_BIG-c7dd3883.png")
+
 st.title("Uniform Work Order Tracking")
 
-# Define Options
-shirt_sizes = ["XS", "S", "M", "L", "XL", "2XL", "3XL", "4XL", "5XL", "6XL"]
-waists = range(28, 62, 2)
-inseams = range(28, 36, 2)
-pant_sizes = [f"{w}x{i}" for w in waists for i in inseams]
-quantity_options = list(range(1, 21))
-
-df = load_and_clean_data()
-
-st.subheader("Current Entries")
-st.dataframe(df, use_container_width=True)
-
-st.subheader("Add New Work Order")
-
-# Exclude old columns from the NEW input form
-EXCLUDED_FROM_FORM = ['Shirts Order (#)', 'Pants Order (#)']
-
-with st.form("new_entry_form", clear_on_submit=True):
-    new_data = {}
+# --- Form Section ---
+with st.form("new_order_form", clear_on_submit=True):
+    col1, col2 = st.columns(2)
     
-    new_data['Employee Name'] = st.text_input("Employee Name")
-    
-    row1_c1, row1_c2 = st.columns(2)
-    with row1_c1:
-        new_data['Date of Order'] = st.date_input("Date of Order", value=datetime.now())
-    with row1_c2:
-        new_data['Workorder Number'] = st.text_input("Workorder Number")
+    # Options
+    num_options = list(range(1, 21)) 
+    pants_size_options = [
+        '23X30', '26X30', '28X30', '28X32', '30X30', '30X32', '30X34', '30X36', 
+        '32X30', '32X32', '32X34', '32X36', '34X28', '34X30', '34X32', '34X34', 
+        '34X36', '36X28', '36X30', '36X32', '36X34', '38X28', '38X30', '38X32', 
+        '38X34', '38X36', '38X38', '40X28', '40X30', '40X31', '40X32', '40X34', 
+        '40X36', '42X28', '42X30', '42X32', '42X33', '42X34', '42X36', '42X40', 
+        '44X30', '44X32', '44X34', '44X36', '46X30', '46X32', '46X34', '48X28', 
+        '48X30', '48X31', '48X32', '48X34', '50X30', '50X32', '50X34', '52X32', 
+        '52X34', '56X32'
+    ]
+    shirt_size_options = [
+        "SM", "MED", "MEDL", "LG", "LGER", 
+        "1XLR", "2XLR", "3XLR", "4XLR", "5XLR", "6XLR", 
+        "1XLL", "2XLL", "3XLL", "4XLL", "5XLL", "6XLL"
+    ]
+
+    with col1:
+        employee_name = st.text_input("Employee Name")
+        date_of_order = st.date_input("Date of Order")
+        workorder_number = st.text_input("Workorder Number")
         
-    row2_c1, row2_c2 = st.columns(2)
-    with row2_c1:
-        new_data['Shirt Size'] = st.selectbox("Shirt Size", shirt_sizes, index=None, placeholder="Select Size")
-    with row2_c2:
-        new_data['Pants Size'] = st.selectbox("Pants Size", pant_sizes, index=None, placeholder="Select Size")
-        
-    row3_c1, row3_c2 = st.columns(2)
-    with row3_c1:
-        new_data['Number of Shirts'] = st.selectbox("Number of Shirts", quantity_options, index=None, placeholder="Select Number")
-    with row3_c2:
-        new_data['Number of Pants'] = st.selectbox("Number of Pants", quantity_options, index=None, placeholder="Select Number")
-        
-    new_data['Comments'] = st.text_area("Comments")
+    with col2:
+        num_pants = st.selectbox("Select Number of Pants", num_options, index=None, placeholder="Choose an option...")
+        pants_sizes = st.selectbox("Select Pants Sizes", pants_size_options, index=None, placeholder="Choose an option...")
+        num_shirts = st.selectbox("Number of Shirts", num_options, index=None, placeholder="Choose an option...")
+        shirt_sizes = st.selectbox("Shirt Sizes", shirt_size_options, index=None, placeholder="Choose an option...")
     
-    # Catch-all for any extra columns
-    for col in df.columns:
-        if col not in new_data and col not in EXCLUDED_FROM_FORM:
-            new_data[col] = st.text_input(f"{col}")
-    
-    submit = st.form_submit_button("Save New Work Order")
+    comments = st.text_area("Comments")
+    submitted = st.form_submit_button("Save New Work Order")
 
-if submit:
-    new_row = pd.DataFrame([new_data])
-    if 'Date of Order' in new_row.columns:
-        new_row['Date of Order'] = new_row['Date of Order'].astype(str)
-    
-    # Append the new row to the current data
-    updated_df = pd.concat([df, new_row], ignore_index=True)
-    
-    # Overwrite the Excel file with the updated data
-    with pd.ExcelWriter(FILE_PATH, engine='openpyxl', mode='a', if_sheet_exists='replace') as writer:
-        updated_df.to_excel(writer, sheet_name='Uniform Work Order Tracking', index=False)
-    
-    st.success("Entry saved successfully to the spreadsheet!")
-    st.rerun()
+    if submitted:
+        # Construct the payload
+        data = {
+            "employee_name": employee_name,
+            "date": date_of_order.strftime('%Y-%m-%d'),
+            "pants_qty": num_pants,
+            "pants_size": pants_sizes,
+            "shirt_qty": num_shirts,
+            "shirt_size": shirt_sizes,
+            "workorder": workorder_number,
+            "comments": comments
+        }
+        
+        try:
+            # Send the data to your Power Automate flow
+            response = requests.post(WEBHOOK_URL, json=data)
+            
+            if response.status_code in [200, 202]:
+                st.success("Work order saved successfully to SharePoint!")
+            else:
+                st.error(f"Failed to save. Status code: {response.status_code}")
+                
+        except Exception as e:
+            st.error(f"Error connecting to SharePoint: {e}")
