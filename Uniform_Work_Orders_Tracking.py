@@ -21,6 +21,10 @@ def load_and_clean_data():
     cols_to_drop = [c for c in df.columns if "Unnamed" in str(c)]
     df = df.drop(columns=cols_to_drop)
     
+    # 3. Ensure a 'Comments' column exists
+    if 'Comments' not in df.columns:
+        df['Comments'] = ""
+        
     return df
 
 st.title("Uniform Work Order Tracking")
@@ -36,15 +40,14 @@ with st.form("new_entry_form", clear_on_submit=True):
     new_data = {}
     cols = st.columns(2)
     
-    # Generate inputs based on remaining clean columns
+    # Create input fields
+    # We iterate through the columns and assign the appropriate input type
     for i, col in enumerate(df.columns):
         with cols[i % 2]:
             if col == 'Date of Order':
-                # Calendar Dropdown
                 new_data[col] = st.date_input(f"{col}", value=datetime.now())
-            elif col == 'Workorder Number':
-                # Multi-line comment area
-                new_data[col] = st.text_area(f"{col} (Add comments here if needed)")
+            elif col == 'Comments':
+                new_data[col] = st.text_area("Comments")
             else:
                 new_data[col] = st.text_input(f"{col}")
     
@@ -52,7 +55,6 @@ with st.form("new_entry_form", clear_on_submit=True):
 
 if submit:
     new_row = pd.DataFrame([new_data])
-    # Ensure the date is formatted as a string for Excel if preferred
     new_row['Date of Order'] = new_row['Date of Order'].astype(str)
     
     updated_df = pd.concat([df, new_row], ignore_index=True)
