@@ -14,7 +14,7 @@ def load_and_clean_data():
     # Load data
     df = pd.read_excel(FILE_PATH, sheet_name='Uniform Work Order Tracking')
     
-    # Clean up display by dropping unwanted "Unnamed" columns only
+    # Clean up display by dropping unwanted "Unnamed" columns
     cols_to_drop = [c for c in df.columns if "Unnamed" in str(c)]
     df = df.drop(columns=cols_to_drop, errors='ignore')
     
@@ -39,42 +39,40 @@ st.dataframe(df)
 # Automate data entry form
 st.subheader("Add New Work Order")
 
-# Define exactly which columns to EXCLUDE from the input form
-# Adding both Pants and Shirts order columns here hides them from the input area
+# Columns to EXCLUDE from the input form
 EXCLUDED_FROM_FORM = ['Shirts Order (#)', 'Pants Order (#)']
 
 with st.form("new_entry_form", clear_on_submit=True):
     new_data = {}
-    cols = st.columns(2)
     
-    # 1. Define the specific fields we WANT to see in the form
-    form_fields = [
-        'Date of Order', 'Shirt Size', 'Pants Size', 
-        'Number of Shirts', 'Number of Pants', 'Comments'
-    ]
+    # Row 1: Date of Order | Workorder Number
+    row1_c1, row1_c2 = st.columns(2)
+    with row1_c1:
+        new_data['Date of Order'] = st.date_input("Date of Order", value=datetime.now())
+    with row1_c2:
+        new_data['Workorder Number'] = st.text_input("Workorder Number")
+        
+    # Row 2: Shirt Size | Pants Size
+    row2_c1, row2_c2 = st.columns(2)
+    with row2_c1:
+        new_data['Shirt Size'] = st.selectbox("Shirt Size", shirt_sizes)
+    with row2_c2:
+        new_data['Pants Size'] = st.selectbox("Pants Size", pant_sizes)
+        
+    # Row 3: Number of Shirts | Number of Pants
+    row3_c1, row3_c2 = st.columns(2)
+    with row3_c1:
+        new_data['Number of Shirts'] = st.selectbox("Number of Shirts", quantity_options)
+    with row3_c2:
+        new_data['Number of Pants'] = st.selectbox("Number of Pants", quantity_options)
+        
+    # Row 4: Comments
+    new_data['Comments'] = st.text_area("Comments")
     
-    # 2. Add any other columns from your Excel that are NOT in our exclusion list
+    # Handle any remaining columns that weren't explicitly defined above
     for col in df.columns:
-        if col not in form_fields and col not in EXCLUDED_FROM_FORM:
-            form_fields.append(col)
-
-    # 3. Create the form inputs
-    for i, col in enumerate(form_fields):
-        with cols[i % 2]:
-            if col == 'Date of Order':
-                new_data[col] = st.date_input(f"{col}", value=datetime.now())
-            elif col == 'Comments':
-                new_data[col] = st.text_area("Comments")
-            elif col == 'Shirt Size':
-                new_data[col] = st.selectbox("Shirt Size", shirt_sizes)
-            elif col == 'Pants Size':
-                new_data[col] = st.selectbox("Pants Size", pant_sizes)
-            elif col == 'Number of Shirts':
-                new_data[col] = st.selectbox("Number of Shirts", quantity_options)
-            elif col == 'Number of Pants':
-                new_data[col] = st.selectbox("Number of Pants", quantity_options)
-            else:
-                new_data[col] = st.text_input(f"{col}")
+        if col not in new_data and col not in EXCLUDED_FROM_FORM:
+            new_data[col] = st.text_input(f"{col}")
     
     submit = st.form_submit_button("Save New Work Order")
 
