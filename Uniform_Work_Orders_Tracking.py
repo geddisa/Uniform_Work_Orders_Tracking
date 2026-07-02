@@ -80,19 +80,16 @@ with st.form("new_entry_form", clear_on_submit=True):
     submit = st.form_submit_button("Save New Work Order")
 
 if submit:
-    # Validation Logic (checking for None ensures user picked an option)
-    if any(new_data.get(k) is None for k in ['Shirt Size', 'Pants Size', 'Number of Shirts', 'Number of Pants']):
-        st.warning("Please ensure all sizes and numbers are selected.")
-    else:
-        new_row = pd.DataFrame([new_data])
-        if 'Date of Order' in new_row.columns:
-            new_row['Date of Order'] = new_row['Date of Order'].astype(str)
-        
-        updated_df = pd.concat([df, new_row], ignore_index=True)
-        
-        # Save back to Excel
-        with pd.ExcelWriter(FILE_PATH, engine='openpyxl', mode='a', if_sheet_exists='replace') as writer:
-            updated_df.to_excel(writer, sheet_name='Uniform Work Order Tracking', index=False)
-        
-        st.success("Entry saved successfully!")
-        st.rerun()
+    # No longer performing validation checks on the new_data dictionary
+    new_row = pd.DataFrame([new_data])
+    if 'Date of Order' in new_row.columns:
+        new_row['Date of Order'] = new_row['Date of Order'].astype(str)
+    
+    updated_df = pd.concat([df, new_row], ignore_index=True)
+    
+    # Save back to Excel
+    with pd.ExcelWriter(FILE_PATH, engine='openpyxl', mode='a', if_sheet_exists='replace') as writer:
+        updated_df.to_excel(writer, sheet_name='Uniform Work Order Tracking', index=False)
+    
+    st.success("Entry saved successfully!")
+    st.rerun()
