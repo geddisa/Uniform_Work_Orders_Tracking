@@ -30,7 +30,7 @@ shirt_sizes = ["XS", "S", "M", "L", "XL", "2XL", "3XL", "4XL", "5XL", "6XL"]
 waists = range(28, 62, 2)
 inseams = range(28, 36, 2)
 pant_sizes = [f"{w}x{i}" for w in waists for i in inseams]
-quantity_options = ["Select Number"] + list(range(1, 21))
+quantity_options = list(range(1, 21)) # Numbers only
 
 df = load_and_clean_data()
 st.subheader("Current Entries")
@@ -45,7 +45,7 @@ EXCLUDED_FROM_FORM = ['Shirts Order (#)', 'Pants Order (#)']
 with st.form("new_entry_form", clear_on_submit=True):
     new_data = {}
     
-    # Row 0: Employee Name (Full width)
+    # Row 0: Employee Name
     new_data['Employee Name'] = st.text_input("Employee Name")
     
     # Row 1: Date of Order | Workorder Number
@@ -62,12 +62,12 @@ with st.form("new_entry_form", clear_on_submit=True):
     with row2_c2:
         new_data['Pants Size'] = st.selectbox("Pants Size", pant_sizes, index=None, placeholder="Select Size")
         
-    # Row 3: Number of Shirts | Number of Pants
+    # Row 3: Number of Shirts | Number of Pants (Now using placeholder)
     row3_c1, row3_c2 = st.columns(2)
     with row3_c1:
-        new_data['Number of Shirts'] = st.selectbox("Number of Shirts", quantity_options, index=0)
+        new_data['Number of Shirts'] = st.selectbox("Number of Shirts", quantity_options, index=None, placeholder="Select Number")
     with row3_c2:
-        new_data['Number of Pants'] = st.selectbox("Number of Pants", quantity_options, index=0)
+        new_data['Number of Pants'] = st.selectbox("Number of Pants", quantity_options, index=None, placeholder="Select Number")
         
     # Row 4: Comments
     new_data['Comments'] = st.text_area("Comments")
@@ -80,11 +80,9 @@ with st.form("new_entry_form", clear_on_submit=True):
     submit = st.form_submit_button("Save New Work Order")
 
 if submit:
-    # Validation Logic
-    if new_data['Shirt Size'] is None or new_data['Pants Size'] is None:
-        st.warning("Please select both a Shirt Size and a Pants Size.")
-    elif new_data['Number of Shirts'] == "Select Number" or new_data['Number of Pants'] == "Select Number":
-        st.warning("Please select a valid quantity for shirts and pants.")
+    # Validation Logic (checking for None ensures user picked an option)
+    if any(new_data.get(k) is None for k in ['Shirt Size', 'Pants Size', 'Number of Shirts', 'Number of Pants']):
+        st.warning("Please ensure all sizes and numbers are selected.")
     else:
         new_row = pd.DataFrame([new_data])
         if 'Date of Order' in new_row.columns:
