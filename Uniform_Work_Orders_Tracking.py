@@ -14,7 +14,11 @@ def load_and_clean_data():
     # Load data
     df = pd.read_excel(FILE_PATH, sheet_name='Uniform Work Order Tracking')
     
-    # Clean up display by dropping unwanted "Unnamed" columns
+    # RENAME: Map 'Unnamed: 5' to 'Comments' before doing anything else
+    if 'Unnamed: 5' in df.columns:
+        df = df.rename(columns={'Unnamed: 5': 'Comments'})
+    
+    # Clean up display by dropping other unwanted "Unnamed" columns
     cols_to_drop = [c for c in df.columns if "Unnamed" in str(c)]
     df = df.drop(columns=cols_to_drop, errors='ignore')
     
@@ -23,6 +27,7 @@ def load_and_clean_data():
     
     return df
 
+st.set_page_config(layout="wide") # This ensures the page itself is wide
 st.title("Uniform Work Order Tracking")
 
 # Define Options
@@ -30,11 +35,13 @@ shirt_sizes = ["XS", "S", "M", "L", "XL", "2XL", "3XL", "4XL", "5XL", "6XL"]
 waists = range(28, 62, 2)
 inseams = range(28, 36, 2)
 pant_sizes = [f"{w}x{i}" for w in waists for i in inseams]
-quantity_options = list(range(1, 21)) # Numbers only
+quantity_options = list(range(1, 21))
 
 df = load_and_clean_data()
+
 st.subheader("Current Entries")
-st.dataframe(df)
+# use_container_width=True makes the table stretch to fill your screen
+st.dataframe(df, use_container_width=True)
 
 # Automate data entry form
 st.subheader("Add New Work Order")
@@ -62,7 +69,7 @@ with st.form("new_entry_form", clear_on_submit=True):
     with row2_c2:
         new_data['Pants Size'] = st.selectbox("Pants Size", pant_sizes, index=None, placeholder="Select Size")
         
-    # Row 3: Number of Shirts | Number of Pants (Now using placeholder)
+    # Row 3: Number of Shirts | Number of Pants
     row3_c1, row3_c2 = st.columns(2)
     with row3_c1:
         new_data['Number of Shirts'] = st.selectbox("Number of Shirts", quantity_options, index=None, placeholder="Select Number")
@@ -80,7 +87,6 @@ with st.form("new_entry_form", clear_on_submit=True):
     submit = st.form_submit_button("Save New Work Order")
 
 if submit:
-    # No longer performing validation checks on the new_data dictionary
     new_row = pd.DataFrame([new_data])
     if 'Date of Order' in new_row.columns:
         new_row['Date of Order'] = new_row['Date of Order'].astype(str)
