@@ -45,6 +45,9 @@ EXCLUDED_FROM_FORM = ['Shirts Order (#)', 'Pants Order (#)']
 with st.form("new_entry_form", clear_on_submit=True):
     new_data = {}
     
+    # Row 0: Employee Name (Full width)
+    new_data['Employee Name'] = st.text_input("Employee Name")
+    
     # Row 1: Date of Order | Workorder Number
     row1_c1, row1_c2 = st.columns(2)
     with row1_c1:
