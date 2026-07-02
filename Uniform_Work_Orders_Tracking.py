@@ -14,15 +14,14 @@ def load_and_clean_data():
     # Load data
     df = pd.read_excel(FILE_PATH, sheet_name='Uniform Work Order Tracking')
     
-    # 1. CLEANING FOR DISPLAY: 
-    # Drop unwanted "Unnamed" columns AND the old Order columns so they don't appear in the table
-    cols_to_drop = [c for c in df.columns if "Unnamed" in str(c) or c == 'Pants Order (#)']
-    display_df = df.drop(columns=cols_to_drop, errors='ignore')
+    # Clean up display by dropping unwanted "Unnamed" columns only
+    cols_to_drop = [c for c in df.columns if "Unnamed" in str(c)]
+    df = df.drop(columns=cols_to_drop, errors='ignore')
     
     # Drop rows that are entirely empty
-    display_df = display_df.dropna(how='all')
+    df = df.dropna(how='all')
     
-    return df, display_df
+    return df
 
 st.title("Uniform Work Order Tracking")
 
@@ -33,16 +32,15 @@ inseams = range(28, 36, 2)
 pant_sizes = [f"{w}x{i}" for w in waists for i in inseams]
 quantity_options = list(range(1, 21))
 
-# Get both the full dataframe (for saving) and the clean display version
-full_df, display_df = load_and_clean_data()
-
+df = load_and_clean_data()
 st.subheader("Current Entries")
-st.dataframe(display_df)
+st.dataframe(df)
 
 # Automate data entry form
 st.subheader("Add New Work Order")
 
-# List of old columns we want to HIDE from the entry form
+# Define exactly which columns to EXCLUDE from the input form
+# Adding both Pants and Shirts order columns here hides them from the input area
 EXCLUDED_FROM_FORM = ['Shirts Order (#)', 'Pants Order (#)']
 
 with st.form("new_entry_form", clear_on_submit=True):
@@ -55,8 +53,8 @@ with st.form("new_entry_form", clear_on_submit=True):
         'Number of Shirts', 'Number of Pants', 'Comments'
     ]
     
-    # 2. Add any other existing columns (excluding the old ones we want to hide)
-    for col in full_df.columns:
+    # 2. Add any other columns from your Excel that are NOT in our exclusion list
+    for col in df.columns:
         if col not in form_fields and col not in EXCLUDED_FROM_FORM:
             form_fields.append(col)
 
@@ -85,7 +83,7 @@ if submit:
     if 'Date of Order' in new_row.columns:
         new_row['Date of Order'] = new_row['Date of Order'].astype(str)
     
-    updated_df = pd.concat([full_df, new_row], ignore_index=True)
+    updated_df = pd.concat([df, new_row], ignore_index=True)
     
     # Save back to Excel
     with pd.ExcelWriter(FILE_PATH, engine='openpyxl', mode='a', if_sheet_exists='replace') as writer:
