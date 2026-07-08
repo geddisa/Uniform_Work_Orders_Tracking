@@ -91,24 +91,21 @@ with st.form("new_order_form", clear_on_submit=True):
 st.divider()
 st.subheader("Pending New Orders")
 
-try:
-    df_view = pd.read_excel(FILE_PATH, sheet_name=NEW_ORDERS_SHEET)
-    st.dataframe(df_view, use_container_width=True)
-
-    # Action Buttons
-    col_a, col_b = st.columns([1, 5])
-    with col_a:
-        if st.button("📋 Copy All"):
-            df_view.to_clipboard(index=False, header=False)
-            st.toast("Data copied to clipboard!", icon="✅")
-            
-    with col_b:
-        if st.button("🗑️ Clear All"):
-            empty_df = pd.DataFrame(columns=df_view.columns)
+# --- Auto-Reset Functionality ---
+def clear_sheet():
+    if os.path.exists(FILE_PATH):
+        try:
+            # Load the file, create an empty dataframe with the expected columns
+            # and overwrite the 'New Entries' sheet
+            empty_df = pd.DataFrame(columns=[
+                "Employee Name", "Date of Order", "Number of Pants", 
+                "Pants Sizes", "Number of Shirts", "Shirt Sizes", 
+                "Workorder Number", "Comments"
+            ])
             with pd.ExcelWriter(FILE_PATH, engine='openpyxl', mode='a', if_sheet_exists='replace') as writer:
                 empty_df.to_excel(writer, sheet_name=NEW_ORDERS_SHEET, index=False)
-            st.warning("All entries cleared.")
-            st.rerun()
+        except Exception:
+            pass # Silently fail if file is locked or other issues
 
-except Exception:
-    st.info("No new entries pending.")
+# Call the function once when the app script reruns
+clear_sheet()
