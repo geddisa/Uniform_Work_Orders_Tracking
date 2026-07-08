@@ -93,11 +93,10 @@ try:
     # Action Buttons
     col_a, col_b = st.columns([1, 5])
     with col_a:
-        if st.button("Copy All Entries"):
-            # Converts dataframe to CSV string without the header
-            csv_data = df_view.to_csv(index=False, header=False)
-            st.code(csv_data)
-            st.info("Copy the data above.")
+        if st.button("📋 Copy All"):
+            # header=False prevents the column names from being copied
+            df_view.to_clipboard(index=False, header=False)
+            st.success("Data copied to clipboard!")
             
     with col_b:
         if st.button("Clear All Entries"):
