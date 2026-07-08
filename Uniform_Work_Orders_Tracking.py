@@ -86,8 +86,27 @@ with st.form("new_order_form", clear_on_submit=True):
 # --- Display Pending Entries ---
 st.divider()
 st.subheader("Pending New Orders")
+
 try:
     df_view = pd.read_excel(FILE_PATH, sheet_name=NEW_ORDERS_SHEET)
+    
+    # Action Buttons
+    col_a, col_b = st.columns([1, 5])
+    with col_a:
+        if st.button("Copy All Entries"):
+            # Converts dataframe to CSV string for clipboard
+            st.write(df_view.to_csv(index=False))
+            st.info("Copy the text above manually (or use a browser extension to copy tables).")
+            
+    with col_b:
+        if st.button("Clear All Entries"):
+            # Overwrites the sheet with an empty dataframe containing only headers
+            empty_df = pd.DataFrame(columns=df_view.columns)
+            with pd.ExcelWriter(FILE_PATH, engine='openpyxl', mode='a', if_sheet_exists='replace') as writer:
+                empty_df.to_excel(writer, sheet_name=NEW_ORDERS_SHEET, index=False)
+            st.rerun()
+
     st.dataframe(df_view, use_container_width=True)
+
 except Exception:
     st.info("No new entries pending.")
