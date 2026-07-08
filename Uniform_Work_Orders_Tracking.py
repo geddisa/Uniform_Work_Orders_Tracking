@@ -94,9 +94,10 @@ try:
     col_a, col_b = st.columns([1, 5])
     with col_a:
         if st.button("Copy All Entries"):
-            # Converts dataframe to CSV string for clipboard
-            st.write(df_view.to_csv(index=False))
-            st.info("Copy the text above manually (or use a browser extension to copy tables).")
+            # Converts dataframe to CSV string without the header
+            csv_data = df_view.to_csv(index=False, header=False)
+            st.code(csv_data)
+            st.info("Copy the data above.")
             
     with col_b:
         if st.button("Clear All Entries"):
