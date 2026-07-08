@@ -5,9 +5,9 @@ import os
 import pyperclip
 
 # --- Configuration ---
-FILE_PATH = r"C:\Users\geddisa\OneDrive - Century Aluminum\Documents\Aramark (Vestis) Uniform Spreadsheet.xlsx"
+FILE_PATH = "Aramark (Vestis) Uniform Spreadsheet.xlsx"
 NEW_ORDERS_SHEET = 'New Entries' 
-LOGO_PATH = "CENX_BIG-c7dd3883.png" # Ensure this file is in your directory
+LOGO_PATH = "century_logo.png" # Ensure this file is in your directory
 
 # Define options
 NUM_OPTIONS = list(range(1, 21))
