@@ -5,9 +5,9 @@ import os
 import pyperclip
 
 # --- Configuration ---
-FILE_PATH = "Aramark (Vestis) Uniform Spreadsheet.xlsx"
+FILE_PATH = r"C:\Users\geddisa\OneDrive - Century Aluminum\Documents\Aramark (Vestis) Uniform Spreadsheet.xlsx"
 NEW_ORDERS_SHEET = 'New Entries' 
-LOGO_PATH = "century_logo.png" 
+LOGO_PATH = "CENX_BIG-c7dd3883.png" # Ensure this file is in your directory
 
 # Define options
 NUM_OPTIONS = list(range(1, 21))
@@ -90,3 +90,24 @@ with st.form("new_order_form", clear_on_submit=True):
 # --- Display Pending Entries ---
 st.divider()
 st.subheader("Pending New Orders")
+
+try:
+    df_view = pd.read_excel(FILE_PATH, sheet_name=NEW_ORDERS_SHEET)
+    st.dataframe(df_view, use_container_width=True)
+
+    # Action Buttons
+    col_a, col_b = st.columns([1, 5])
+    with col_a:
+        if st.button("📋 Copy All"):
+            df_view.to_clipboard(index=False)
+            st.success("Copied!")
+    with col_b:
+        if st.button("🗑️ Clear All"):
+            empty_df = pd.DataFrame(columns=df_view.columns)
+            with pd.ExcelWriter(FILE_PATH, engine='openpyxl', mode='a', if_sheet_exists='replace') as writer:
+                empty_df.to_excel(writer, sheet_name=NEW_ORDERS_SHEET, index=False)
+            st.warning("All entries cleared.")
+            st.rerun()
+
+except Exception:
+    st.info("No new entries pending.")
