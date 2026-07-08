@@ -4,7 +4,6 @@ import openpyxl
 import os
 
 # --- Configuration ---
-FILE_PATH = r"C:\Users\geddisa\OneDrive - Century Aluminum\Documents\Aramark (Vestis) Uniform Spreadsheet.xlsx"
 NEW_ORDERS_SHEET = 'New Entries' 
 
 # Define options
