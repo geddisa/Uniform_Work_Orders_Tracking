@@ -2,10 +2,12 @@ import streamlit as st
 import pandas as pd
 import openpyxl
 import os
+import pyperclip
 
 # --- Configuration ---
-NEW_ORDERS_SHEET = 'New Entries' 
 FILE_PATH = "Aramark (Vestis) Uniform Spreadsheet.xlsx"
+NEW_ORDERS_SHEET = 'New Entries' 
+LOGO_PATH = "century_logo.png" 
 
 # Define options
 NUM_OPTIONS = list(range(1, 21))
@@ -26,6 +28,10 @@ SHIRT_SIZE_OPTIONS = [
 ]
 
 st.set_page_config(page_title="Uniform Entry", layout="wide")
+
+# --- Header ---
+if os.path.exists(LOGO_PATH):
+    st.image(LOGO_PATH, width=400)
 st.title("New Uniform Work Orders")
 
 # --- Input Form ---
@@ -62,7 +68,6 @@ with st.form("new_order_form", clear_on_submit=True):
             }
             
             try:
-                # Load existing or create new sheet
                 if not os.path.exists(FILE_PATH):
                     df_new = pd.DataFrame(new_data)
                 else:
@@ -72,11 +77,10 @@ with st.form("new_order_form", clear_on_submit=True):
                     except:
                         df_new = pd.DataFrame(new_data)
 
-                # Save to Excel
                 with pd.ExcelWriter(FILE_PATH, engine='openpyxl', mode='a', if_sheet_exists='replace') as writer:
                     df_new.to_excel(writer, sheet_name=NEW_ORDERS_SHEET, index=False)
                 
-                st.success("Entry saved to 'New Entries' sheet!")
+                st.success("Entry saved!")
                 st.rerun()
             except PermissionError:
                 st.error("Permission Denied: Please close the Excel file.")
@@ -89,24 +93,22 @@ st.subheader("Pending New Orders")
 
 try:
     df_view = pd.read_excel(FILE_PATH, sheet_name=NEW_ORDERS_SHEET)
-    
+    st.dataframe(df_view, use_container_width=True)
+
     # Action Buttons
     col_a, col_b = st.columns([1, 5])
     with col_a:
         if st.button("📋 Copy All"):
-            # header=False prevents the column names from being copied
             df_view.to_clipboard(index=False, header=False)
-            st.success("Data copied to clipboard!")
+            st.toast("Data copied to clipboard!", icon="✅")
             
     with col_b:
-        if st.button("Clear All Entries"):
-            # Overwrites the sheet with an empty dataframe containing only headers
+        if st.button("🗑️ Clear All"):
             empty_df = pd.DataFrame(columns=df_view.columns)
             with pd.ExcelWriter(FILE_PATH, engine='openpyxl', mode='a', if_sheet_exists='replace') as writer:
                 empty_df.to_excel(writer, sheet_name=NEW_ORDERS_SHEET, index=False)
+            st.warning("All entries cleared.")
             st.rerun()
-
-    st.dataframe(df_view, use_container_width=True)
 
 except Exception:
     st.info("No new entries pending.")
