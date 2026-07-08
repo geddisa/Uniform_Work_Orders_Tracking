@@ -5,6 +5,7 @@ import os
 
 # --- Configuration ---
 NEW_ORDERS_SHEET = 'New Entries' 
+FILE_PATH = r"C:\Users\geddisa\Uniform Work Orders Tracking System\Aramark (Vestis) Uniform Spreadsheet.xlsx"
 
 # Define options
 NUM_OPTIONS = list(range(1, 21))
