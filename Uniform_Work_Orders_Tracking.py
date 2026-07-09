@@ -96,12 +96,8 @@ try:
     st.dataframe(df_view, use_container_width=True)
 
     # Action Buttons
-    col_a, col_b = st.columns([1, 5])
+    col_a = st.columns([1, 5])
     with col_a:
-        if st.button("📋 Copy All"):
-            df_view.to_clipboard(index=True)
-            st.success("Copied!")
-    with col_b:
         if st.button("🗑️ Clear All"):
             empty_df = pd.DataFrame(columns=df_view.columns)
             with pd.ExcelWriter(FILE_PATH, engine='openpyxl', mode='a', if_sheet_exists='replace') as writer:
