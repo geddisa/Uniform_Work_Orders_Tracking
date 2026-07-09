@@ -95,38 +95,51 @@ try:
     df_view = pd.read_excel(FILE_PATH, sheet_name=NEW_ORDERS_SHEET)
     st.dataframe(df_view, use_container_width=True)
 
-    # Action Buttons
-    col_a = st.columns([1, 5])
-    with col_a[0]:
-        # Using a button that triggers a confirmation
+    # Action Buttons Layout
+    col_a, col_b = st.columns([1, 1])
+    
+    with col_a:
         if st.button("🗑️ Clear All"):
             st.session_state['confirm_clear'] = True
-    
-    # Logic to handle confirmation
+            
+    with col_b:
+        if st.button("📋 Copy All Data"):
+            if not df_view.empty:
+                # Convert dataframe to a tab-separated string without headers
+                data_str = df_view.to_csv(sep='\t', index=False, header=False)
+                
+                # Copy directly to system clipboard
+                pyperclip.copy(data_str)
+                st.success("📋 Data copied! Press Ctrl+V to paste directly into Excel.")
+            else:
+                st.warning("No data available to copy.")
+
+    # Logic to handle Clear All confirmation
     if st.session_state.get('confirm_clear', False):
         st.warning("Are you sure you want to delete all entries?")
-        if st.button("Yes, Clear Everything"):
-            try:
-                # Direct manipulation with openpyxl
-                wb = openpyxl.load_workbook(FILE_PATH)
-                if NEW_ORDERS_SHEET in wb.sheetnames:
-                    ws = wb[NEW_ORDERS_SHEET]
-                    # Delete all rows except the header (assuming row 1 is header)
-                    if ws.max_row > 1:
-                        ws.delete_rows(2, ws.max_row)
-                
-                wb.save(FILE_PATH)
-                st.session_state['confirm_clear'] = False
-                st.success("All entries cleared.")
-                st.rerun()
-            except PermissionError:
-                st.error("Permission Denied: Please close the Excel file.")
-            except Exception as e:
-                st.error(f"An error occurred: {e}")
+        col_c, col_d = st.columns([1, 5])
         
-        if st.button("Cancel"):
-            st.session_state['confirm_clear'] = False
-            st.rerun()
+        with col_c:
+            if st.button("Yes, Clear"):
+                try:
+                    wb = openpyxl.load_workbook(FILE_PATH)
+                    if NEW_ORDERS_SHEET in wb.sheetnames:
+                        ws = wb[NEW_ORDERS_SHEET]
+                        if ws.max_row > 1:
+                            ws.delete_rows(2, ws.max_row)
+                    wb.save(FILE_PATH)
+                    st.session_state['confirm_clear'] = False
+                    st.success("All entries cleared.")
+                    st.rerun()
+                except PermissionError:
+                    st.error("Permission Denied: Please close the Excel file.")
+                except Exception as e:
+                    st.error(f"An error occurred: {e}")
+                    
+        with col_d:
+            if st.button("Cancel"):
+                st.session_state['confirm_clear'] = False
+                st.rerun()
 
 except FileNotFoundError:
     st.info("No file found. No entries pending.")
