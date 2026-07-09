@@ -99,7 +99,7 @@ try:
     col_a, col_b = st.columns([1, 5])
     with col_a:
         if st.button("📋 Copy All"):
-            df_view.to_clipboard(index=False)
+            df_view.to_clipboard(index=True)
             st.success("Copied!")
     with col_b:
         if st.button("🗑️ Clear All"):
