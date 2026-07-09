@@ -97,13 +97,38 @@ try:
 
     # Action Buttons
     col_a = st.columns([1, 5])
-    with col_a:
+    with col_a[0]:
+        # Using a button that triggers a confirmation
         if st.button("🗑️ Clear All"):
-            empty_df = pd.DataFrame(columns=df_view.columns)
-            with pd.ExcelWriter(FILE_PATH, engine='openpyxl', mode='a', if_sheet_exists='replace') as writer:
-                empty_df.to_excel(writer, sheet_name=NEW_ORDERS_SHEET, index=False)
-            st.warning("All entries cleared.")
+            st.session_state['confirm_clear'] = True
+    
+    # Logic to handle confirmation
+    if st.session_state.get('confirm_clear', False):
+        st.warning("Are you sure you want to delete all entries?")
+        if st.button("Yes, Clear Everything"):
+            try:
+                # Direct manipulation with openpyxl
+                wb = openpyxl.load_workbook(FILE_PATH)
+                if NEW_ORDERS_SHEET in wb.sheetnames:
+                    ws = wb[NEW_ORDERS_SHEET]
+                    # Delete all rows except the header (assuming row 1 is header)
+                    if ws.max_row > 1:
+                        ws.delete_rows(2, ws.max_row)
+                
+                wb.save(FILE_PATH)
+                st.session_state['confirm_clear'] = False
+                st.success("All entries cleared.")
+                st.rerun()
+            except PermissionError:
+                st.error("Permission Denied: Please close the Excel file.")
+            except Exception as e:
+                st.error(f"An error occurred: {e}")
+        
+        if st.button("Cancel"):
+            st.session_state['confirm_clear'] = False
             st.rerun()
 
+except FileNotFoundError:
+    st.info("No file found. No entries pending.")
 except Exception:
     st.info("No new entries pending.")
