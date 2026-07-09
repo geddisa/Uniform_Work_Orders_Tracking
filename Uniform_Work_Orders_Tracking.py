@@ -88,6 +88,7 @@ with st.form("new_order_form", clear_on_submit=True):
                 st.error(f"Error: {e}")
 
 # --- Display Pending Entries ---
+# --- Display Pending Entries ---
 st.divider()
 st.subheader("Pending New Orders")
 
@@ -95,24 +96,19 @@ try:
     df_view = pd.read_excel(FILE_PATH, sheet_name=NEW_ORDERS_SHEET)
     st.dataframe(df_view, use_container_width=True)
 
+    # Copy Instructions Note
+    st.info(
+        "💡 **To copy data:** Click and drag your cursor to select the data rows and columns "
+        "in the table above, then press **Ctrl + C** (or **Cmd + C** on Mac) to copy. "
+        "You can then paste it directly into your destination spreadsheet using **Ctrl + V**."
+    )
+
     # Action Buttons Layout
-    col_a, col_b = st.columns([1, 1])
+    col_a = st.columns([1, 5])
     
-    with col_a:
+    with col_a[0]:
         if st.button("🗑️ Clear All"):
             st.session_state['confirm_clear'] = True
-            
-    with col_b:
-        if st.button("📋 Copy All Data"):
-            if not df_view.empty:
-                # Convert dataframe to a tab-separated string without headers
-                data_str = df_view.to_csv(sep='\t', index=False, header=False)
-                
-                # Copy directly to system clipboard
-                pyperclip.copy(data_str)
-                st.success("📋 Data copied! Press Ctrl+V to paste directly into Excel.")
-            else:
-                st.warning("No data available to copy.")
 
     # Logic to handle Clear All confirmation
     if st.session_state.get('confirm_clear', False):
